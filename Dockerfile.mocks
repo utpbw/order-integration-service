@@ -1,0 +1,19 @@
+# Use an official Python runtime as a parent image
+FROM python:3.11-slim
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the requirements file and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+ENV PYTHONPATH=/app
+
+# Copy the rest of the application code
+COPY . .
+
+# Generate gRPC stubs, as the mock_inventory_service needs them too
+RUN python -m grpc_tools.protoc -I=./protos --python_out=. --grpc_python_out=. ./protos/inventory.proto
+
+# No EXPOSE needed here, as commands in docker-compose will run on different ports.

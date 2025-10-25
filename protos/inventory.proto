@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package inventory;
+
+service InventoryService {
+  rpc ReserveItems(ReserveItemsRequest) returns (ReserveItemsResponse);
+  rpc ReleaseItems(ReleaseItemsRequest) returns (ReleaseItemsResponse);
+}
+
+message Item {
+  string sku = 1;
+  int32 quantity = 2;
+}
+
+message ReserveItemsRequest {
+  string order_id = 1;
+  repeated Item items = 2;
+}
+
+message ReserveItemsResponse {
+  string reservation_id = 1;
+  ReservationStatus status = 2;
+}
+
+enum ReservationStatus {
+  RESERVED = 0;
+  OUT_OF_STOCK = 1;
+  ITEM_NOT_FOUND = 2;
+}
+
+message ReleaseItemsRequest {
+  string order_id = 1;
+}
+
+message ReleaseItemsResponse {
+  bool success = 1;
+}

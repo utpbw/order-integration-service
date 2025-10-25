@@ -1,0 +1,14 @@
+# Frameworks
+fastapi
+uvicorn[standard]
+pydantic
+
+# gRPC
+grpcio
+grpcio-tools
+
+# REST Client
+httpx
+
+# Message Queue
+pika

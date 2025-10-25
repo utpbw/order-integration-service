@@ -1,0 +1,31 @@
+{
+  "orderId": "ORD-2025-10-23-1003",
+  "customer": {
+    "customerId": "CUST-9003",
+    "prename": "Thomas",
+    "name": "Berger"
+  },
+  "items": [
+    {
+      "sku": "SKU-1001",
+      "productId": "P-1001",
+      "quantity": 1,
+      "price": 29.99
+    },
+    {
+      "sku": "SKU-3003",
+      "productId": "P-3003",
+      "quantity": 1,
+      "price": 79.99
+    }
+  ],
+  "totalAmount": 109.98,
+  "currency": "EUR",
+  "paymentToken": "PAY-0003",
+  "shippingAddress": {
+    "street": "Goethestr. 15",
+    "city": "Karlsruhe",
+    "zipCode": "76135",
+    "country": "Germany"
+  }
+}

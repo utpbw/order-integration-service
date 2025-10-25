@@ -1,0 +1,31 @@
+{
+  "orderId": "ORD-2025-10-23-1001",
+  "customer": {
+    "customerId": "CUST-9001",
+    "prename": "Andreas",
+    "name": "Heberle"
+  },
+  "items": [
+    {
+      "sku": "SKU-1001",
+      "productId": "P-1001",
+      "quantity": 2,
+      "price": 29.99
+    },
+    {
+      "sku": "SKU-2002",
+      "productId": "P-2002",
+      "quantity": 1,
+      "price": 49.99
+    }
+  ],
+  "totalAmount": 109.97,
+  "currency": "EUR",
+  "paymentToken": "PAY-123456789",
+  "shippingAddress": {
+    "street": "Moltke Str. 30",
+    "city": "Karlsruhe",
+    "zipCode": "76133",
+    "country": "Germany"
+  }
+}

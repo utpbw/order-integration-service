@@ -1,0 +1,20 @@
+FROM python:3.12-slim
+
+# Set work directory
+WORKDIR /app
+
+# Copy files
+COPY . .
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Ensure FastAPI app can find all packages
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+
+# Expose the FastAPI port
+EXPOSE 8000
+
+# Run FastAPI app
+CMD ["uvicorn", "integration_service.main:app", "--host", "0.0.0.0", "--port", "8000"]

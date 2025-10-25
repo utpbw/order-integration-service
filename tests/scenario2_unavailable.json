@@ -1,0 +1,31 @@
+{
+  "orderId": "ORD-2025-10-23-1002",
+  "customer": {
+    "customerId": "CUST-9002",
+    "prename": "Lisa",
+    "name": "Krüger"
+  },
+  "items": [
+    {
+      "sku": "OUT-OF-STOCK-4040",
+      "productId": "P-4040",
+      "quantity": 3,
+      "price": 19.99
+    },
+    {
+      "sku": "SKU-2002",
+      "productId": "P-2002",
+      "quantity": 1,
+      "price": 49.99
+    }
+  ],
+  "totalAmount": 109.96,
+  "currency": "EUR",
+  "paymentToken": "PAY-OUT-OF-STOCK-98765",
+  "shippingAddress": {
+    "street": "Karlstr. 22",
+    "city": "Karlsruhe",
+    "zipCode": "76131",
+    "country": "Germany"
+  }
+}

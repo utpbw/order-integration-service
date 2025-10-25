@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.11-management
+    ports:
+      - "5672:5672"  # AMQP
+      - "15672:15672" # Management UI
+    environment:
+      - RABBITMQ_DEFAULT_USER=shopag
+      - RABBITMQ_DEFAULT_PASS=shopag
+
+  integration_service:
+    build:
+      context: .
+      dockerfile: Dockerfile.integration # (Dockerfile nicht gezeigt, s.u.)
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      - rabbitmq
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+
+  mock_inventory_service:
+    build:
+      context: .
+      dockerfile: Dockerfile.mocks # (Dockerfile nicht gezeigt, s.u.)
+    command: python mock_services/mock_inventory_service.py
+    ports:
+      - "50051:50051"
+    volumes:
+      - .:/app
+
+  mock_payment_service:
+    build:
+      context: .
+      dockerfile: Dockerfile.mocks
+    command: uvicorn mock_services.mock_payment_service:app --host 0.0.0.0 --port 8001
+    ports:
+      - "8001:8001"
+    volumes:
+      - .:/app
+
+  mock_wms:
+    build:
+      context: .
+      dockerfile: Dockerfile.mocks
+    command: python mock_services/mock_wms.py
+    depends_on:
+      - rabbitmq
+    volumes:
+      - .:/app
+    environment:
+      - RABBITMQ_HOST=rabbitmq
