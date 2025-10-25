@@ -1,3 +1,11 @@
+"""
+This module provides communication clients for external systems used in the integration service:
+- Inventory Service (gRPC)
+- Payment Service (REST API)
+- Warehouse Management System (RabbitMQ)
+Each class encapsulates its protocol logic, error handling, and connection management.
+"""
+
 import grpc
 import httpx
 import pika
@@ -20,15 +28,32 @@ log = logging.getLogger(__name__)
 
 # --- Inventory Client (gRPC) ---
 class InventoryClient:
+    """
+    Client for the Inventory Service (gRPC).
+    Handles reservation and release of items during order processing.
+    """
     def __init__(self):
-        # Channel wird pro Instanz erstellt. In einer echten App: Singleton oder Pool.
+        """
+        Initializes the gRPC channel and stub for the Inventory Service.
+        """
         self.channel = grpc.insecure_channel(INVENTORY_SERVICE_URL)
         self.stub = inventory_pb2_grpc.InventoryServiceStub(self.channel)
 
     def __del__(self):
+        """Closes the gRPC channel when the instance is deleted."""
         self.channel.close()
 
     def reserve_items(self, order_id: str, items: list) -> inventory_pb2.ReserveItemsResponse:
+        """
+        Sends a ReserveItems request to the Inventory Service.
+        Args:
+            order_id (str): Unique ID of the order.
+            items (list): List of item dicts with 'sku' and 'quantity'.
+        Returns:
+            inventory_pb2.ReserveItemsResponse: The reservation result including status and reservation_id.
+        Raises:
+            grpc.RpcError: If the gRPC call fails or times out.
+        """
         proto_items = [inventory_pb2.Item(sku=item['sku'], quantity=item['quantity']) for item in items]
         request = inventory_pb2.ReserveItemsRequest(order_id=order_id, items=proto_items)
         try:
@@ -38,28 +63,55 @@ class InventoryClient:
             raise
 
     def release_items_compensation(self, order_id: str):
-        """Kompensationsaufruf. Darf nicht fehlschlagen (Retries nötig)."""
+        """
+        Sends a compensation request to release previously reserved items.
+        This method should never fail silently. If an exception occurs,
+        it should be logged and retried later.
+        Args:
+            order_id (str): The order ID whose reservation should be released.
+        Raises:
+            grpc.RpcError: If the gRPC call fails.
+        """
         log.info(f"[Order: {order_id}] Kompensation: Sende 'ReleaseItems' an IS.")
         request = inventory_pb2.ReleaseItemsRequest(order_id=order_id)
         try:
             self.stub.ReleaseItems(request, timeout=5)
         except grpc.RpcError as e:
             log.critical(f"[Order: {order_id}] KOMPENSATION FEHLGESCHLAGEN: {e.details()}. BENÖTIGT MANUELLE AKTION!")
-            # In einer echten App: Retry-Loop oder in eine separate "Compensation-Failed"-Queue.
             raise
 
 
 # --- Payment Client (REST) ---
 class PaymentClient:
+    """
+    Client for the Payment Service (REST API).
+    Handles the creation of payment charges and error responses.
+    """
     def __init__(self):
-        # Timeout: 5s connect, 8s read (muss kürzer als der PS-Timeout sein)
+        """
+        Initializes the HTTP client with proper timeout configuration.
+        """
         timeout_config = httpx.Timeout(5.0, read=8.0)
         self.client = httpx.Client(base_url=PAYMENT_SERVICE_URL, timeout=timeout_config)
 
     def __del__(self):
+        """Closes the HTTP client session."""
         self.client.close()
 
     def create_charge(self, order_id: str, token: str, amount_cents: int, currency: str):
+        """
+        Creates a new charge via the Payment Service REST API.
+        Args:
+            order_id (str): Unique order identifier.
+            token (str): Payment token provided by the OMS.
+            amount_cents (int): Charge amount in cents.
+            currency (str): ISO currency code (e.g. 'EUR').
+        Returns:
+            dict: JSON response containing transaction details and status.
+        Raises:
+            httpx.ReadTimeout: If the service does not respond within the timeout.
+            httpx.HTTPStatusError: If the service returns an error status (4xx or 5xx).
+        """
         idempotency_key = str(uuid.uuid4())
         payload = {
             "amount": amount_cents,
@@ -89,12 +141,22 @@ class PaymentClient:
 
 # --- WMS Client (MQ) ---
 class WMSClient:
+    """
+    Client for the Warehouse Management System (RabbitMQ).
+    Sends shipment instructions and manages the MQ connection.
+    """
     def __init__(self):
+        """Initializes the RabbitMQ connection and declares required queues."""
         self.connection = None
         self.channel = None
         self._connect()
 
     def _connect(self):
+        """
+        Establishes a RabbitMQ connection using predefined credentials.
+        Raises:
+            pika.exceptions.AMQPConnectionError: If the connection fails.
+        """
         try:
             credentials = pika.PlainCredentials('shopag', 'shopag')
             self.connection = pika.BlockingConnection(
@@ -108,7 +170,14 @@ class WMSClient:
             raise
 
     def send_shipment_instruction(self, order_id: str, items: list):
-        # In einer echten App würden hier noch Adressdaten etc. hinzukommen
+        """
+        Sends a shipment instruction message to the WMS queue.
+        Args:
+            order_id (str): The order ID.
+            items (list): List of items in the order.
+        Raises:
+            Exception: If message publishing fails.
+        """
         message = {
             "instructionId": str(uuid.uuid4()),
             "orderId": order_id,
@@ -138,7 +207,12 @@ class WMSClient:
 
 # --- WMS Listener (MQ Consumer) ---
 def start_wms_status_listener():
-    """Diese Funktion läuft in einem eigenen Thread und lauscht auf WMS-Updates."""
+    """
+    Starts a background thread that listens for WMS status updates.
+    The listener consumes messages from the `wms.status.updates` queue,
+    parses them as JSON, logs their content, and acknowledges valid messages.
+    On connection loss or errors, it attempts automatic reconnection after 10 seconds.
+    """
     log.info("WMS Status Listener Thread startet...")
     while True:
         try:

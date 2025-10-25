@@ -1,11 +1,31 @@
+"""
+logging_config.py — Centralized Logging Configuration for Integration Service
+
+This module configures unified logging behavior for the entire application.
+It ensures that all modules log messages consistently to both console and file.
+
+Features:
+    • Combined console and file logging output
+    • Process ID tagging for multi-process visibility
+    • Standardized log format for all modules
+    • Reduced verbosity for external dependencies (e.g., pika)
+"""
+
 import logging
 import sys
 
 
 def setup_logging():
     """
-    Configures application-wide logging with both file and console output.
-    Uses the standard 'process' attribute for process ID.
+    Configures the global logging system for the application.
+
+    The configuration includes:
+        - Log level: INFO (default)
+        - Log format: timestamp, log level, process ID, and message
+        - Output destinations:
+            1. File: 'order_processing.log' (persistent log)
+            2. Console (stdout): real-time logs, Docker/Kubernetes compatible
+        - Reduced verbosity for third-party libraries such as pika
     """
     log_format = '%(asctime)s - %(levelname)s - [PID:%(process)d] - %(message)s'
 
@@ -25,5 +45,17 @@ def setup_logging():
 
 
 def get_logger(name):
-    """Return a named logger instance."""
+    """
+    Returns a configured logger instance for a given module or component name.
+
+    Args:
+        name (str): The logger name, typically the module’s __name__.
+
+    Returns:
+        logging.Logger: A preconfigured logger that follows the global format and handlers.
+
+    Notes:
+        - This function should be used instead of directly calling `logging.getLogger()`
+          to maintain consistent naming conventions and global configuration.
+    """
     return logging.getLogger(name)
