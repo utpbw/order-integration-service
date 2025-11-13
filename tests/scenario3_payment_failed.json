@@ -21,7 +21,7 @@
   ],
   "totalAmount": 109.98,
   "currency": "EUR",
-  "paymentToken": "PAY-0003",
+  "paymentToken": "tok_decline_1003",
   "shippingAddress": {
     "street": "Goethestr. 15",
     "city": "Karlsruhe",

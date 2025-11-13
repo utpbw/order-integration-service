@@ -19,8 +19,8 @@ import time
 from protos import inventory_pb2_grpc, inventory_pb2
 
 # Service-Adressen (normalerweise aus Env Vars)
-INVENTORY_SERVICE_URL = "mock_inventory_service:50051"
-PAYMENT_SERVICE_URL = "http://mock_payment_service:8001"
+INVENTORY_SERVICE_URL = os.environ.get("INVENTORY_SERVICE_URL", "inventory_service:50051")
+PAYMENT_SERVICE_URL = os.environ.get("PAYMENT_SERVICE_URL", "http://payment_service:8001")
 RABBITMQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
 
 log = logging.getLogger(__name__)
